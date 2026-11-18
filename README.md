@@ -7,7 +7,7 @@ cursor is. It runs on your laptop. No audio leaves the machine.
 
 Early version, 0.1. Works: hotkey, recording, transcription, paste, a settings window and a
 history of the last 10 dictations, and a custom word list. Tested by hand in TextEdit, Notes, Chrome and Slack, in
-Spanish and English. Filler word removal is next. No demo GIF yet.
+Spanish and English. No demo GIF yet.
 
 ## Speed
 
