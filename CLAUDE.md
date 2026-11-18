@@ -15,7 +15,7 @@ Do not re-derive it.
 
 ## Repo
 
-Git repo `sebagarciar/habla` on GitHub, **public**. Commit to `main`. Read
+Git repo `sebagarciar/dicta` on GitHub, **public**. Commit to `main`. Read
 `context/repos.md` in the `ia_os` root before any commit or push.
 Nothing personal goes in a tracked file: no email, no phone, no `/Users/` paths, no real
 names of people, no companies he is interviewing with, and not his real word list.
