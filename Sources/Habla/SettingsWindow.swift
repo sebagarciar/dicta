@@ -22,7 +22,7 @@ struct SettingsView: View {
             Section("Pasting") {
                 slider("Wait before pasting", $before, 0...300, "ms")
                     .onChange(of: before) { _, v in Settings.pasteDelayBeforeMs = v }
-                slider("Wait before restoring clipboard", $after, 50...600, "ms")
+                slider("Wait before restoring clipboard", $after, 50...1000, "ms")
                     .onChange(of: after) { _, v in Settings.pasteDelayAfterMs = v }
             }
             Section("Custom words") {

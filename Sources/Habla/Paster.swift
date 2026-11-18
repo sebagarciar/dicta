@@ -17,6 +17,8 @@ actor Paster {
         try? await Task.sleep(nanoseconds: delayBefore)
         Self.pressCommandV()
         try? await Task.sleep(nanoseconds: delayAfter)
+        // The app reads the clipboard when it handles Cmd+V, which can be late (Chrome, Slack,
+        // a busy Mac). Restoring too early makes it paste the OLD clipboard, so this wait is long.
         // Always restore, even if the paste went nowhere.
         board.clearContents()
         let items = saved.map { entries -> NSPasteboardItem in

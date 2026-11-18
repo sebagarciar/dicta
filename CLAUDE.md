@@ -54,6 +54,8 @@ Do not add one, and do not propose one.
   `.sign-id` (a self-signed certificate) so macOS keeps Accessibility and Input Monitoring. If
   that file is missing, the build falls back to an ad hoc signature and he must remove and add
   Habla again in both permission lists. Say so before you rebuild in that case.
+- **The clipboard restore wait must outlast the slowest app.** At 150 ms, a slow app pasted the
+  old clipboard instead of the dictation. Default is 500 ms. Do not lower it. Details in `notes.md`.
 - **Three permissions are needed:** Microphone, Accessibility (to paste) and Input Monitoring
   (to see the key). The menu names the one that is missing. The app retries on its own, so no
   restart is needed after he turns one on.

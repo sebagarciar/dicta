@@ -55,3 +55,12 @@ Ultra with FluidAudio word boosting (extra CTC model, about 100 MB). Mac-voice c
 - App uses rescue off and similarity 0.6.
 - Aliases ("Word = heard1, heard2") added for words the model keeps mishearing.
 - Live test: passed. Names and "AI" came out right, normal sentences untouched.
+
+## Old clipboard pasted instead of the text (2026-11-18)
+
+- Seen twice in daily use. Cause: the clipboard was restored 150 ms after Cmd+V. An app that
+  reads the clipboard later than that (slow app, busy Mac) got the old clipboard.
+- Simulation with a private pasteboard: a reader at 250 ms and 400 ms got the old clipboard with
+  a 150 ms wait, and the dictated text with a 500 ms wait. Reads at 50 and 120 ms were fine both ways.
+- Fix: default wait before restore is now 500 ms (slider goes up to 1000 ms). Text still appears
+  at the same time. Not yet confirmed in daily use.

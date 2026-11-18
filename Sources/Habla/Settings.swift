@@ -13,7 +13,7 @@ enum Settings {
         set { d.set(newValue, forKey: "pasteBeforeMs") }
     }
     static var pasteDelayAfterMs: Double {
-        get { d.object(forKey: "pasteAfterMs") as? Double ?? 150 }
+        get { d.object(forKey: "pasteAfterMs") as? Double ?? 500 }
         set { d.set(newValue, forKey: "pasteAfterMs") }
     }
     static var soundsOn: Bool {
