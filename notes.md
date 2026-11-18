@@ -41,3 +41,17 @@ Run on an Apple M4. Clips made with the Mac voices (`say`), 16 kHz mono. Time is
 - History (last 10, memory only) and the settings window (hold time, paste waits, sounds, model)
   work in a live test. The model picker moved from the menu into Settings.
 - A self-signed certificate now keeps the permissions between rebuilds.
+
+## Custom words (2026-11-18)
+
+Ultra with FluidAudio word boosting (extra CTC model, about 100 MB). Mac-voice clips, 4 to 6 s:
+
+| Setting | Fixed "Zapira" to "Sapira" | Wrong swaps | Extra time |
+|---|---|---|---|
+| Default | Yes | Yes ("El proyecto" became a custom word) | 0.2 to 0.4 s |
+| Rescue pass off, similarity 0.7 | Yes | None | about 0.12 s |
+| Rescue pass off, similarity 0.5 to 0.7 | Yes | None in 2 control sentences | about 0.12 s |
+
+- App uses rescue off and similarity 0.6.
+- Aliases ("Word = heard1, heard2") added for words the model keeps mishearing.
+- Live test: passed. Names and "AI" came out right, normal sentences untouched.

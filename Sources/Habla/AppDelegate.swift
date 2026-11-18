@@ -51,7 +51,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func openSettings() {
         settingsWindow.show(
             onModelChange: { [weak self] choice in self?.switchModel(choice) },
-            onHoldChange: { [weak self] ms in self?.hotkey.holdThreshold = ms / 1000 })
+            onHoldChange: { [weak self] ms in self?.hotkey.holdThreshold = ms / 1000 },
+            onReloadWords: { [weak self] in self?.reloadWords() })
+    }
+
+    private func reloadWords() {
+        Task {
+            setStatus("Loading words...")
+            let n = await transcriber.loadWords()
+            setStatus(ready ? "Ready (\(n) custom words)" : statusLine.title)
+        }
     }
 
     private func switchModel(_ choice: ModelChoice) {
@@ -151,6 +160,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             do {
                 try await transcriber.load(choice)
+                _ = await transcriber.loadWords()
                 guard choice == model else { return }
                 ready = true
                 setStatus(hotkeyActive ? "Ready" : permissionMessage())

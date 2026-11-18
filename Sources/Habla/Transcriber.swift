@@ -10,6 +10,46 @@ enum ModelChoice: String, CaseIterable {
 actor Transcriber {
     private var asr: AsrManager?
     private var vad: VadManager?
+    private var boosting: VocabularyBoostingSession?
+    private var ctc: CtcModels?
+
+    /// Folder for the user's own files. Outside the repo on purpose.
+    static var supportFolder: URL {
+        FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("Habla")
+    }
+    static var wordsFile: URL { supportFolder.appendingPathComponent("words.txt") }
+
+    /// Reads words.txt (one word or phrase per line, # for comments) and prepares word boosting.
+    /// Returns how many words are active. An empty list turns boosting off.
+    func loadWords() async -> Int {
+        let text = (try? String(contentsOf: Self.wordsFile, encoding: .utf8)) ?? ""
+        let words = text.split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+        guard !words.isEmpty else { boosting = nil; return 0 }
+        do {
+            if ctc == nil { ctc = try await CtcModels.downloadAndLoad(variant: .ctc110m) }
+            // "Word = alias1, alias2": the aliases are what the model tends to hear instead.
+            let terms = words.map { line -> CustomVocabularyTerm in
+                let parts = line.split(separator: "=", maxSplits: 1).map { $0.trimmingCharacters(in: .whitespaces) }
+                let aliases = parts.count > 1
+                    ? parts[1].split(separator: ",").map { $0.trimmingCharacters(in: .whitespaces) }.filter { !$0.isEmpty }
+                    : []
+                return CustomVocabularyTerm(text: parts[0], aliases: aliases.isEmpty ? nil : aliases)
+            }
+            let vocab = CustomVocabularyContext(terms: terms)
+            // Tested setting: the aggressive rescue pass is off because it swapped correct
+            // words for custom ones. A wrong replacement costs more than a miss.
+            boosting = try await VocabularyBoostingSession(
+                vocabulary: vocab, ctcModels: ctc!,
+                config: VocabularyRescorer.Config(spotterRescueEnabled: false),
+                thresholds: .init(cbw: 0, minSimilarity: 0.6))
+            return terms.count
+        } catch {
+            boosting = nil
+            return 0
+        }
+    }
 
     func load(_ choice: ModelChoice) async throws {
         asr = nil
@@ -44,6 +84,11 @@ actor Transcriber {
         }
         var state = TdtDecoderState.make(decoderLayers: await asr.decoderLayerCount)
         let result = try await asr.transcribe(audio, decoderState: &state)
-        return result.text.trimmingCharacters(in: .whitespacesAndNewlines)
+        var text = result.text
+        if let boosting,
+           let out = await boosting.rescore(text: text, tokenTimings: result.tokenTimings ?? [], audioSamples: audio) {
+            text = out.text
+        }
+        return text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 }

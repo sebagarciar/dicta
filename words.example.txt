@@ -1,0 +1,8 @@
+# Custom words for Habla. One word or phrase per line. Lines starting with # are ignored.
+# Copy this file to ~/Library/Application Support/Habla/words.txt and edit it.
+# Use it for names and terms the speech model gets wrong.
+Sapira
+Orbio
+Parakeet
+# To fix a word the model keeps mishearing, list what it hears after an equals sign:
+# Orbio = Orvio, Orvia

@@ -6,8 +6,8 @@ cursor is. It runs on your laptop. No audio leaves the machine.
 ## Status (2026-11-18)
 
 Early version, 0.1. Works: hotkey, recording, transcription, paste, a settings window and a
-history of the last 10 dictations. Tested by hand in TextEdit, Notes, Chrome and Slack, in
-Spanish and English. A custom word list and filler word removal are next. No demo GIF yet.
+history of the last 10 dictations, and a custom word list. Tested by hand in TextEdit, Notes, Chrome and Slack, in
+Spanish and English. Filler word removal is next. No demo GIF yet.
 
 ## Speed
 
@@ -19,6 +19,14 @@ Measured on an Apple M4, with the model already loaded:
 | English | 7.7 s | 0.07 s |
 
 Loading the model at launch takes 20 to 35 seconds.
+
+## Custom words
+
+Copy `words.example.txt` to `~/Library/Application Support/Habla/words.txt` and edit it. One word
+per line. To fix a word the model keeps mishearing, write `Orbio = Orvio, Orvia`. Reload from
+Settings, no restart needed. Boosting adds about 0.1 s per dictation and loads an extra 100 MB
+model. It runs with the aggressive rescue pass off: in tests that pass swapped correct words for
+custom ones.
 
 ## How it works
 

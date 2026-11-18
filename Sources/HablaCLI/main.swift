@@ -26,9 +26,15 @@ func loadSamples(_ path: String) throws -> [Float] {
     return Array(UnsafeBufferPointer(start: out.floatChannelData![0], count: Int(out.frameLength)))
 }
 
-let args = CommandLine.arguments
+var args = CommandLine.arguments
+// Optional: --words <file> turns on custom word boosting (one word per line).
+var wordsFile: String?
+if let i = args.firstIndex(of: "--words"), i + 1 < args.count {
+    wordsFile = args[i + 1]
+    args.removeSubrange(i...(i + 1))
+}
 guard args.count >= 3 else {
-    print("Usage: HablaCLI <ultra|v3> <clip.wav> [more clips...]")
+    print("Usage: HablaCLI <ultra|v3> [--words words.txt] <clip.wav> [more clips...]")
     exit(1)
 }
 let version: AsrModelVersion = args[1] == "v3" ? .v3 : .ultra
@@ -44,18 +50,45 @@ let asr = AsrManager(config: .default)
 try await asr.loadModels(models)
 print("model \(args[1]) loaded in \(String(format: "%.1f", Date().timeIntervalSince(loadStart))) s")
 
+var session: VocabularyBoostingSession?
+if let wordsFile {
+    let t0 = Date()
+    let words = try String(contentsOfFile: wordsFile, encoding: .utf8)
+        .split(separator: "\n").map { $0.trimmingCharacters(in: .whitespaces) }
+        .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+    let ctc = try await CtcModels.downloadAndLoad(variant: .ctc110m)
+    let vocab = CustomVocabularyContext(terms: words.map { CustomVocabularyTerm(text: $0) })
+    // Dictation setting from FluidAudio's docs: a wrong replacement costs more than a miss.
+    session = try await VocabularyBoostingSession(
+        vocabulary: vocab, ctcModels: ctc,
+        config: ProcessInfo.processInfo.environment["HABLA_NO_RESCUE"] != nil
+            ? VocabularyRescorer.Config(spotterRescueEnabled: false) : nil,
+        thresholds: .init(cbw: 0, minSimilarity: Float(ProcessInfo.processInfo.environment["HABLA_SIM"] ?? "") ?? 0.7))
+    print("boosting loaded in \(String(format: "%.1f", Date().timeIntervalSince(t0))) s, \(words.count) words")
+}
+
 for path in args.dropFirst(2) {
     let samples = try loadSamples(path)
     let seconds = Double(samples.count) / 16000
     // Run each clip twice: the first run warms up the model, the second is the real timing.
     var text = ""
     var elapsed = 0.0
+    var boosted: String?
+    var extra = 0.0
     for _ in 0..<2 {
         var state = TdtDecoderState.make(decoderLayers: await asr.decoderLayerCount)
         let t0 = Date()
         let result = try await asr.transcribe(samples, decoderState: &state)
         elapsed = Date().timeIntervalSince(t0)
         text = result.text
+        if let session {
+            let t1 = Date()
+            let out = await session.rescore(text: result.text, tokenTimings: result.tokenTimings ?? [], audioSamples: samples)
+            extra = Date().timeIntervalSince(t1)
+            boosted = out?.text ?? result.text
+        }
     }
-    print("\(URL(fileURLWithPath: path).lastPathComponent) | \(String(format: "%.1f", seconds)) s audio | \(String(format: "%.2f", elapsed)) s | \(text)")
+    let name = URL(fileURLWithPath: path).lastPathComponent
+    print("\(name) | \(String(format: "%.1f", seconds)) s audio | \(String(format: "%.2f", elapsed)) s | \(text)")
+    if let boosted { print("   boosted (+\(String(format: "%.2f", extra)) s) | \(boosted)") }
 }
