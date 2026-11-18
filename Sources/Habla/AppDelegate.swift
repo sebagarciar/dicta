@@ -10,8 +10,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private let transcriber = Transcriber()
     private let paster = Paster()
     private let pill = Pill()
-    private var model: ModelChoice = .ultra
-    private var modelItems: [ModelChoice: NSMenuItem] = [:]
+    private var model: ModelChoice = Settings.model
+    private let settingsWindow = SettingsWindow()
+    private let historyItem = NSMenuItem(title: "History", action: nil, keyEquivalent: "")
+    private var history: [String] = []
     private var ready = false
     private var busy = false
     private var retryTimer: Timer?
@@ -21,6 +23,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         buildMenu()
         setStatus("Checking permissions...")
         requestPermissions()
+        hotkey.holdThreshold = Settings.holdThresholdMs / 1000
         hotkey.onStart = { [weak self] in Task { @MainActor in self?.startRecording() } }
         hotkey.onStop = { [weak self] in Task { @MainActor in self?.stopRecording() } }
         hotkey.onCancel = { [weak self] in Task { @MainActor in self?.cancelRecording() } }
@@ -34,27 +37,55 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(statusLine)
         menu.addItem(.separator())
-        for choice in ModelChoice.allCases {
-            let item = NSMenuItem(title: choice.rawValue, action: #selector(pickModel(_:)), keyEquivalent: "")
-            item.target = self
-            item.representedObject = choice.rawValue
-            item.state = choice == model ? .on : .off
-            modelItems[choice] = item
-            menu.addItem(item)
-        }
+        historyItem.submenu = NSMenu()
+        menu.addItem(historyItem)
+        refreshHistory()
+        let settings = NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ",")
+        settings.target = self
+        menu.addItem(settings)
         menu.addItem(.separator())
         menu.addItem(NSMenuItem(title: "Quit Habla", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q"))
         statusItem.menu = menu
     }
 
-    private func setStatus(_ text: String) { statusLine.title = text }
+    @objc private func openSettings() {
+        settingsWindow.show(
+            onModelChange: { [weak self] choice in self?.switchModel(choice) },
+            onHoldChange: { [weak self] ms in self?.hotkey.holdThreshold = ms / 1000 })
+    }
 
-    @objc private func pickModel(_ sender: NSMenuItem) {
-        guard let raw = sender.representedObject as? String, let choice = ModelChoice(rawValue: raw), choice != model else { return }
+    private func switchModel(_ choice: ModelChoice) {
+        guard choice != model else { return }
         model = choice
-        for (c, item) in modelItems { item.state = c == choice ? .on : .off }
         loadModel()
     }
+
+    // MARK: History (last 10, memory only)
+
+    private func refreshHistory() {
+        let sub = historyItem.submenu!
+        sub.removeAllItems()
+        if history.isEmpty {
+            let empty = NSMenuItem(title: "Nothing yet", action: nil, keyEquivalent: "")
+            empty.isEnabled = false
+            sub.addItem(empty)
+        }
+        for text in history {
+            let short = text.count > 60 ? String(text.prefix(60)) + "..." : text
+            let item = NSMenuItem(title: short, action: #selector(copyHistory(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = text
+            sub.addItem(item)
+        }
+    }
+
+    @objc private func copyHistory(_ sender: NSMenuItem) {
+        guard let text = sender.representedObject as? String else { return }
+        NSPasteboard.general.clearContents()
+        NSPasteboard.general.setString(text, forType: .string)
+    }
+
+    private func setStatus(_ text: String) { statusLine.title = text }
 
     // MARK: Permissions
 
@@ -135,7 +166,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         guard ready, !busy else { return }
         do {
             try recorder.start()
-            NSSound(named: "Tink")?.play()
+            if Settings.soundsOn { NSSound(named: "Tink")?.play() }
             setStatus("Listening")
             pill.show("Listening")
         } catch {
@@ -151,7 +182,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func stopRecording() {
         let samples = recorder.stop()
-        NSSound(named: "Pop")?.play()
+        if Settings.soundsOn { NSSound(named: "Pop")?.play() }
         guard samples.count > 8000 else { pill.hide(); setStatus("Ready"); return }  // under 0.5 s
         busy = true
         setStatus("Transcribing")
@@ -159,7 +190,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Task {
             let text = (try? await transcriber.transcribe(samples)) ?? ""
             pill.hide()
-            if !text.isEmpty { await paster.paste(text) }
+            if !text.isEmpty {
+                history.insert(text, at: 0)
+                history = Array(history.prefix(10))
+                refreshHistory()
+                await paster.paste(text)
+            }
             busy = false
             setStatus("Ready")
         }

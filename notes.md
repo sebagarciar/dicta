@@ -35,3 +35,9 @@ Run on an Apple M4. Clips made with the Mac voices (`say`), 16 kHz mono. Time is
 - Result: everything passed. no failures.
 - Permissions needed: Microphone, Accessibility, Input Monitoring. After a rebuild with ad-hoc
   signing, remove and re-add Habla in Accessibility (a self-signed certificate would avoid this).
+
+## Stage 2 so far (2026-11-18)
+
+- History (last 10, memory only) and the settings window (hold time, paste waits, sounds, model)
+  work in a live test. The model picker moved from the menu into Settings.
+- A self-signed certificate now keeps the permissions between rebuilds.

@@ -4,3 +4,4 @@ clips/*.aiff
 .DS_Store
 # Internal build handoff, not part of the public repo
 plan.md
+.sign-id

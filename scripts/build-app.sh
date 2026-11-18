@@ -31,5 +31,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 PLIST
 
 xattr -cr "$APP"
+# A local, gitignored .sign-id file can hold the certificate name or hash.
+[ -z "${HABLA_SIGN_ID:-}" ] && [ -f .sign-id ] && HABLA_SIGN_ID="$(cat .sign-id)"
 codesign --force --sign "${HABLA_SIGN_ID:--}" "$APP"
 echo "Built $APP"

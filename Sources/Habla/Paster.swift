@@ -4,8 +4,8 @@ import CoreGraphics
 /// Pastes text with the clipboard, then puts the old clipboard back.
 /// One paste at a time: a second call waits for the first to finish.
 actor Paster {
-    var delayBefore: UInt64 = 50_000_000   // 50 ms
-    var delayAfter: UInt64 = 150_000_000   // 150 ms
+    private var delayBefore: UInt64 { UInt64(Settings.pasteDelayBeforeMs * 1_000_000) }
+    private var delayAfter: UInt64 { UInt64(Settings.pasteDelayAfterMs * 1_000_000) }
 
     func paste(_ text: String) async {
         let board = NSPasteboard.general

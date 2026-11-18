@@ -5,9 +5,9 @@ cursor is. It runs on your laptop. No audio leaves the machine.
 
 ## Status (2026-11-18)
 
-Early version, 0.1. Stage 1 works: hotkey, recording, transcription, paste. Tested by hand in
-TextEdit, Notes, Chrome and Slack, in Spanish and English. Settings, a custom word list and
-history are next. No demo GIF yet.
+Early version, 0.1. Works: hotkey, recording, transcription, paste, a settings window and a
+history of the last 10 dictations. Tested by hand in TextEdit, Notes, Chrome and Slack, in
+Spanish and English. A custom word list and filler word removal are next. No demo GIF yet.
 
 ## Speed
 
@@ -50,9 +50,9 @@ iCloud break code signing. The first launch downloads about 630 MB of model file
 | Accessibility | To press Cmd+V for you |
 | Input Monitoring | To see the Right Option key |
 
-The build is signed ad hoc, so macOS forgets Accessibility after each rebuild. Remove Habla from
-the list and add it again. A self-signed certificate in Keychain fixes this: set
-`HABLA_SIGN_ID` to its name before building.
+With an ad hoc signature (the default), macOS forgets Accessibility after each rebuild. A
+self-signed code-signing certificate in Keychain fixes this. Put its name or hash in a file
+called `.sign-id` (gitignored) or in `HABLA_SIGN_ID`, and the build script will use it.
 
 ## Credits
 
