@@ -52,7 +52,7 @@ Ultra with FluidAudio word boosting (extra CTC model, about 100 MB). Mac-voice c
 | Rescue pass off, similarity 0.7 | Yes | None | about 0.12 s |
 | Rescue pass off, similarity 0.5 to 0.7 | Yes | None in 2 control sentences | about 0.12 s |
 
-- App uses rescue off and similarity 0.6.
+- App used rescue off and similarity 0.6 until 2026-11-18, then 0.7 (see below).
 - Aliases ("Word = heard1, heard2") added for words the model keeps mishearing.
 - Live test: passed. Names and "AI" came out right, normal sentences untouched.
 
@@ -64,3 +64,15 @@ Ultra with FluidAudio word boosting (extra CTC model, about 100 MB). Mac-voice c
   a 150 ms wait, and the dictated text with a 500 ms wait. Reads at 50 and 120 ms were fine both ways.
 - Fix: default wait before restore is now 500 ms (slider goes up to 1000 ms). Text still appears
   at the same time. Not yet confirmed in daily use.
+
+## "salir" became "Sapira" (2026-11-18)
+
+- Live dictation: "te va a salir bien" came out as "te va a Sapira bien". "salir" and "Sapira"
+  are 2 letters apart (similarity 0.67), so the 0.6 floor let the swap through.
+- Reproduced with Mac voices at fast speech (4 voices, 3 to 4 speeds, 15 clips). The model heard
+  "salir" right, then word boosting changed it. Slow Paulina never did it.
+- Wrong "Sapira" swaps in those 15 clips: similarity 0.6 = 7, 0.7 = 0, 0.75 = 0, 0.8 = 0.
+- Real corrections still worked at 0.7 to 0.8 (3 clips: "Zapira" to "Sapira", "Chanel", "AI").
+- Fix: similarity 0.7. Regression clip: `clips/salir-fast.wav` (must not contain "Sapira").
+- The CLI had the rescue pass on unless `HABLA_NO_RESCUE` was set, so it did not match the app.
+  It now always uses the app's settings.

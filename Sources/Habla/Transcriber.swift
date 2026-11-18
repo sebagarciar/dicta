@@ -43,7 +43,7 @@ actor Transcriber {
             boosting = try await VocabularyBoostingSession(
                 vocabulary: vocab, ctcModels: ctc!,
                 config: VocabularyRescorer.Config(spotterRescueEnabled: false),
-                thresholds: .init(cbw: 0, minSimilarity: 0.6))
+                thresholds: .init(cbw: 0, minSimilarity: 0.7))
             return terms.count
         } catch {
             boosting = nil

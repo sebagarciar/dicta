@@ -42,7 +42,7 @@ Do not add one, and do not propose one.
 - **Paste goes through the clipboard and Cmd+V**, then the old clipboard is put back, even if
   the paste fails. Pastes run one at a time.
 - **Custom words** use FluidAudio word boosting with the aggressive rescue pass off and
-  similarity 0.6. Left on, that pass swapped correct words for custom ones ("El proyecto"
+  similarity 0.7. Left on, that pass swapped correct words for custom ones ("El proyecto"
   became a custom name). A wrong replacement costs more than a miss. Numbers are in `notes.md`.
   For a word the model keeps mishearing, add an alias to his words file, not code.
 

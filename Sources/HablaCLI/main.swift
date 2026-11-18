@@ -61,8 +61,7 @@ if let wordsFile {
     // Dictation setting from FluidAudio's docs: a wrong replacement costs more than a miss.
     session = try await VocabularyBoostingSession(
         vocabulary: vocab, ctcModels: ctc,
-        config: ProcessInfo.processInfo.environment["HABLA_NO_RESCUE"] != nil
-            ? VocabularyRescorer.Config(spotterRescueEnabled: false) : nil,
+        config: VocabularyRescorer.Config(spotterRescueEnabled: false),  // same as the app
         thresholds: .init(cbw: 0, minSimilarity: Float(ProcessInfo.processInfo.environment["HABLA_SIM"] ?? "") ?? 0.7))
     print("boosting loaded in \(String(format: "%.1f", Date().timeIntervalSince(t0))) s, \(words.count) words")
 }
